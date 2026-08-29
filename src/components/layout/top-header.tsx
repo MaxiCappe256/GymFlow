@@ -4,7 +4,7 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 export function TopHeader() {
   return (
-    <header className="sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800/80 px-4 py-3 transition-colors">
+    <header className="sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800/80 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 transition-colors">
       <div className="max-w-3xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform">

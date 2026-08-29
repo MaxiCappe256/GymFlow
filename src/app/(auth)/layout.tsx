@@ -4,12 +4,12 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden transition-colors">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col justify-center py-12 pt-[max(3rem,env(safe-area-inset-top))] sm:px-6 lg:px-8 relative overflow-hidden transition-colors">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top right theme toggle */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-20">
         <ThemeToggle />
       </div>
 

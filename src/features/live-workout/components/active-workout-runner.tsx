@@ -312,7 +312,7 @@ export function ActiveWorkoutRunner({ initialState }: ActiveWorkoutRunnerProps) 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
       {/* Top Distraction-Free Sticky Bar */}
-      <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 py-2.5 transition-colors">
+      <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 transition-colors">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
           {/* Stopwatch & Pause Button */}
           <div className="flex items-center gap-2">
