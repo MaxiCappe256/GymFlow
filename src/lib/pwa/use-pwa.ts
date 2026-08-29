@@ -13,17 +13,25 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function usePWA() {
   const [isInstallable, setIsInstallable] = useState(false);
-  const isStandalone = typeof window !== 'undefined' && (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as unknown as { standalone?: boolean }).standalone === true
-  );
-  const [isOnline, setIsOnline] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return navigator.onLine;
-  });
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
+    // Check standalone mode (already installed as PWA)
+    const standaloneMode =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    setIsStandalone(standaloneMode);
+
+    // Check iOS Safari device
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
+    setIsIOS(isIosDevice);
+
+    setIsOnline(navigator.onLine);
+
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -31,12 +39,12 @@ export function usePWA() {
     window.addEventListener('offline', handleOffline);
 
     // Register Service Worker in production / client
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+    if ('serviceWorker' in navigator && typeof window !== 'undefined') {
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            console.log('[GymFlow ServiceWorker] Registered with scope:', registration.scope);
+            console.log('[GymFlow ServiceWorker] Registered:', registration.scope);
           })
           .catch((error) => {
             console.error('[GymFlow ServiceWorker] Registration failed:', error);
@@ -44,7 +52,7 @@ export function usePWA() {
       });
     }
 
-    // Capture beforeinstallprompt event
+    // Capture beforeinstallprompt event (Chrome, Edge, Android)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -80,6 +88,7 @@ export function usePWA() {
 
   return {
     isInstallable,
+    isIOS,
     isStandalone,
     isOnline,
     installApp,
