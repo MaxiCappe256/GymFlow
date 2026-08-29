@@ -1,0 +1,204 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum GoalType {
+  HYPERTROPHY
+  STRENGTH
+  ENDURANCE
+  WEIGHT_LOSS
+}
+
+enum Methodology {
+  WEIDER
+  PUSH_PULL_LEGS
+  UPPER_LOWER
+  FULL_BODY
+  HEAVY_DUTY
+  CUSTOM
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  LEGS_QUADRICEPS
+  LEGS_HAMSTRINGS
+  LEGS_CALVES
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  CORE
+  FULL_BODY
+}
+
+enum SetType {
+  WARMUP
+  NORMAL
+  DROPSET
+  MYO_REPS
+  FAILURE
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  passwordHash    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  profile         UserProfile?
+  routines        Routine[]
+  workoutLogs     WorkoutSession[]
+  personalRecords PersonalRecord[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experienceLevel  ExperienceLevel @default(BEGINNER)
+  goal             GoalType        @default(HYPERTROPHY)
+  weightKg         Float?
+  heightCm         Float?
+  birthDate        DateTime?
+  preferredDays    Int             @default(3)
+  restSoundEnabled Boolean         @default(true)
+  vibrationEnabled Boolean         @default(true)
+  theme            String          @default("dark")
+
+  @@map("user_profiles")
+}
+
+model Routine {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  methodology Methodology      @default(CUSTOM)
+  isArchived  Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  days        RoutineDay[]
+  sessions    WorkoutSession[]
+
+  @@index([userId])
+  @@map("routines")
+}
+
+model RoutineDay {
+  id         String            @id @default(cuid())
+  routineId  String
+  routine    Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  dayIndex   Int               // 0 = Day A, 1 = Day B, etc.
+  name       String            // e.g. "Push - Chest & Triceps"
+  restDay    Boolean           @default(false)
+
+  exercises  RoutineExercise[]
+
+  @@index([routineId])
+  @@map("routine_days")
+}
+
+model Exercise {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  description      String?
+  targetMuscle     MuscleGroup
+  secondaryMuscles MuscleGroup[]
+  isCustom         Boolean           @default(false)
+  userId           String?           // Nullable: standard library vs custom user-created
+  
+  routineItems     RoutineExercise[]
+  sessionSets      SetLog[]
+
+  @@map("exercises")
+}
+
+model RoutineExercise {
+  id            String      @id @default(cuid())
+  routineDayId  String
+  routineDay    RoutineDay  @relation(fields: [routineDayId], references: [id], onDelete: Cascade)
+  exerciseId    String
+  exercise      Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  orderIndex    Int
+  targetSets    Int         @default(3)
+  targetRepsMin Int         @default(8)
+  targetRepsMax Int         @default(12)
+  targetRir     Int?        // Reps In Reserve (0-4)
+  restTimeSec   Int         @default(90)
+  notes         String?
+
+  @@index([routineDayId])
+  @@map("routine_exercises")
+}
+
+model WorkoutSession {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineId     String?
+  routine       Routine?    @relation(fields: [routineId], references: [id], onDelete: SetNull)
+  name          String
+  startedAt     DateTime
+  endedAt       DateTime?
+  durationSec   Int         @default(0)
+  totalVolumeKg Float       @default(0)
+  notes         String?
+
+  sets          SetLog[]
+
+  @@index([userId, startedAt])
+  @@map("workout_sessions")
+}
+
+model SetLog {
+  id               String         @id @default(cuid())
+  workoutSessionId String
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exerciseId       String
+  exercise         Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  setNumber        Int
+  setType          SetType        @default(NORMAL)
+  weightKg         Float
+  reps             Int
+  rir              Int?
+  isCompleted      Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  @@index([workoutSessionId])
+  @@index([exerciseId])
+  @@map("set_logs")
+}
+
+model PersonalRecord {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  oneRepMaxEst Float       // Calculated 1RM
+  maxWeightKg  Float       // Absolute heaviest weight logged
+  maxVolumeSet Float       // Max weight * reps in single set
+  achievedAt   DateTime    @default(now())
+
+  @@unique([userId, exerciseId])
+  @@map("personal_records")
+}
